@@ -6,6 +6,7 @@
 #include <SPI.h>
 #include <Wire.h>
 #include <stdlib.h>
+#include "HardwareSerial.h"
 //#include <tesseract/baseapi.h>
 //#include <leptonica/allheaders.h>
 
@@ -17,9 +18,9 @@
 // Use hardware SPI (on Uno, #13, #12, #11) and the above for CS/DC
 Adafruit_ILI9341 tft = Adafruit_ILI9341(TFT_CS, TFT_DC, TFT_RST);
 
-// Global Variables
-int counter = 0;
-int counter1 = 0;
+// Global Variables, uses dynamic memory, might need to reduce depending on size of photo
+short int counter = 0;
+short int counter1 = 0;
 uint16_t arr[] = {ILI9341_BLUE, ILI9341_RED, ILI9341_GREEN};
 const int CS = 5;
 
@@ -41,29 +42,23 @@ void setup() {
 
   //---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-  //Serial.println(testText());
-  //delay(3000);
-
-  Serial.println(testRects());
-  Serial.println(testText());
+  Serial.println(setupGrid());
+  Serial.println(setupCells());
   delay(10000);
-  tft.fillScreen(ILI9341_BLACK);
-  //Serial.println(testFilledRects(ILI9341_YELLOW, ILI9341_MAGENTA));
-  //delay(500);
-
+  tft.fillScreen(ILI9341_BLACK); // "Clear screen"
 }
 
-// Runs after Main is complete
+// Runs after Main is complete, constantly loops
 void loop(void) {
-  Serial.println(testRects());
-  Serial.println(testText());
+  Serial.println(setupGrid());
+  Serial.println(setupCells());
   delay(10000);
-  tft.fillScreen(ILI9341_BLACK);
+  tft.fillScreen(ILI9341_BLACK); // ClearScreen
 }
 
-// TODO:
-// Update method name and have this method run the setup
-unsigned long testText() {
+
+// setsup the text in each cell, TODO: instead of random, use data from camera
+unsigned long setupCells() {
   //tft.fillScreen(ILI9341_BLACK);
   unsigned long start = micros();
   tft.setRotation(3);
@@ -99,7 +94,7 @@ int genRandNum()
 }
 
 // Sets up all the grids, (TODO, make it also set up a 2D array)
-unsigned long testRects() {
+unsigned long setupGrid() {
   unsigned long start;
   int cx = 7;
   int cy = (tft.height() / 2) + 115;
