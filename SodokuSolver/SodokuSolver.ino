@@ -2,13 +2,25 @@
 #include "Adafruit_GFX.h"
 #include "Adafruit_ILI9341.h"
 
-#include <ArduCAM.h>
 #include <SPI.h>
 #include <Wire.h>
 #include <stdlib.h>
-#include "HardwareSerial.h"
-//#include <tesseract/baseapi.h>
-//#include <leptonica/allheaders.h>
+#include "TouchScreen.h"
+
+// This is calibration data for the raw touch data to the screen coordinates
+#define TS_MINX 150
+#define TS_MINY 120
+#define TS_MAXX 920
+#define TS_MAXY 940
+
+#define MINPRESSURE 10
+#define MAXPRESSURE 1000
+
+// These are the four touchscreen analog pins
+#define YP A2  // must be an analog pin, use "An" notation!
+#define XM A3  // must be an analog pin, use "An" notation!
+#define YM 9   // can be any digital pin
+#define XP 8   // can be any digital pin
 
 // For the Adafruit shield, these are the default.
 #define TFT_DC 9
@@ -18,15 +30,20 @@
 // Use hardware SPI (on Uno, #13, #12, #11) and the above for CS/DC
 Adafruit_ILI9341 tft = Adafruit_ILI9341(TFT_CS, TFT_DC, TFT_RST);
 
+TouchScreen ts = TouchScreen(XP, YP, XM, YM, 300);
+
 // Global Variables, uses dynamic memory, might need to reduce depending on size of photo
 short int counter = 0;
 short int counter1 = 0;
 uint16_t arr[] = {ILI9341_BLUE, ILI9341_RED, ILI9341_GREEN};
 const int CS = 5;
 
-//string grid[9][9];
+int grid[8][8];
 
 int currentNum = 0;
+
+#define BOXSIZE 40
+#define PENRADIUS 1
 
 //-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -43,22 +60,25 @@ void setup() {
   //---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
   Serial.println(setupGrid());
-  Serial.println(setupCells());
-  delay(10000);
-  tft.fillScreen(ILI9341_BLACK); // "Clear screen"
+  Serial.println(buttonSetup());
 }
 
 // Runs after Main is complete, constantly loops
 void loop(void) {
-  Serial.println(setupGrid());
-  Serial.println(setupCells());
-  delay(10000);
-  tft.fillScreen(ILI9341_BLACK); // ClearScreen
+  TS_Point p = ts.getPoint();
+
+  if (p.z < MINPRESSURE || p.z > MAXPRESSURE)
+    return;
+
+  p.x = map(p.x, TS_MINX, TS_MAXX, 0, tft.width());
+  p.y = map(p.y, TS_MINY, TS_MAXY, 0, tft.height());
+
+  // Edit box here
 }
 
 
-// setsup the text in each cell, TODO: instead of random, use data from camera
-unsigned long setupCells() {
+// Have Method SetupButtons
+unsigned long buttonSetup() {
   //tft.fillScreen(ILI9341_BLACK);
   unsigned long start = micros();
   tft.setRotation(3);
@@ -74,7 +94,7 @@ unsigned long setupCells() {
     for (int j = 1; j <= 9; j++)
     {
       tft.setCursor(w, h);
-      tft.println(String(genRandNum()));
+      tft.println(String(NULL));
       w += 25;
     }
     w = 52;
@@ -85,12 +105,6 @@ unsigned long setupCells() {
   tft.setTextColor(ILI9341_WHITE);
   tft.println("Aaron's Project");
   return micros() - start;
-}
-
-// Returns a random number between 1-9, Not needed in next version
-int genRandNum()
-{
-  return rand()%9 + 1;
 }
 
 // Sets up all the grids, (TODO, make it also set up a 2D array)
